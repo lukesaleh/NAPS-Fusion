@@ -1,0 +1,49 @@
+data_dir = "data/NAPS-Fusion/datasets"
+data_compressed_dir = "data/NAPS-Fusion/ExtraSensory.per_uuid_features_labels"
+cross_validation_dir = "data/NAPS-Fusion/cv5Folds/cv_5_folds"
+fusion_method = "naps-fusion"
+activities = ["FIX_walking"]
+sensor_combination = [["Acc", "WAcc"]]
+
+[early-fusion]
+activities = ["LYING_DOWN", "FIX_walking", "SITTING", "FIX_running"]
+sensor_combination = [["Acc", "WAcc"], ["Gyro", "WAcc"]]
+
+[lfa-fusion]
+results_dir = "results/ucsd"
+activities = ["LYING_DOWN", "FIX_walking", "SITTING", "FIX_running"]
+sensor_combination = [["Acc"], ["Gyro"], ["WAcc"], ["Loc"], ["Aud"], ["PS"]]
+force_test = false
+force_training = false
+
+[lfl-fusion]
+results_dir = "results/ucsd"
+activities = ["LYING_DOWN", "FIX_walking", "SITTING", "FIX_running"]
+#activities = ["LYING_DOWN", "SITTING","FIX_walking", "FIX_running"]
+sensor_combination = [["Acc"], ["Gyro"], ["WAcc"], ["Loc"], ["Aud"], ["PS"]]
+force_test = false
+force_training = false
+
+[naps-fusion]
+#results_dir = "results/naps"
+results_dir = "naps"
+activities = ["LYING_DOWN", "FIX_walking", "SITTING", "FIX_running"]
+sensor_combination = ["Acc", "Gyro", "WAcc", "Loc", "Aud", "PS"]
+force_test = false
+force_training = false
+random_seed = 42
+percentage_of_features = 10 # out of 175 features used in paper
+# Takes 6681.180029153824 s train on split 0
+reduced_feature_sets = 40
+number_bags = 20
+number_top_models = 6
+bagging_features_ratio = 1.0
+bagging_samples_ratio = 0.6
+bootstrap_features = false
+bootstrap_samples = true # this should always be true
+test_ratio = 1000 # 1.0
+#chosen_splits = [0, 1, 2, 3, 4]
+#chosen_splits = [1]
+chosen_splits = [0, 2, 3, 4]
+skip_testing = false
+#base_classifier = "decision tree" # there is also "logistic regression"
