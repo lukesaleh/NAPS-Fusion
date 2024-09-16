@@ -4,7 +4,13 @@ Created on Wed Oct 30 13:17:55 2019
 
 @author: 14342
 """
+
 from __future__ import absolute_import, division, print_function
+import os
+import sys
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(1, "../examples")
+sys.path.append(parent_dir)
 from pyds_local import *
 from Naive_Adaptive_Sensor_Fusion import *
 import config
@@ -13,7 +19,7 @@ from timeit import default_timer as timer
 import random
 import glob
 import multiprocessing.pool as mp
-import os
+
 import pandas as pd
 import numpy as np
 from sklearn import preprocessing
@@ -38,12 +44,12 @@ from pycm import ConfusionMatrix
 # import tensorflow as tf
 
 # caution: path[0] is reserved for script path (or '' in REPL)
-sys.path.insert(1, "../examples")
 from ucsd_fusion import save_model_to_pickle as save_var_to_pickle
 from ucsd_fusion import load_model_from_pickle as load_var_from_pickle
 from not_my_code import get_performance_metrics, plot_confusion_matrix
 
 warnings.filterwarnings("ignore")
+
 
 
 def readdata_csv(data_dir):
