@@ -10,6 +10,9 @@ import sys
 import time
 
 from pathlib import Path
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(1, "../examples")
+sys.path.append(parent_dir)
 
 from imblearn.over_sampling import SMOTE
 from pycm import ConfusionMatrix
@@ -847,7 +850,7 @@ def run_cross_val(config: dict):
 
 
 def main():
-    with open(os.path.join("../config.toml"), "rb") as f:
+    with open(os.path.join("config.toml"), "rb") as f:
         project_config = tomllib.load(f)
 
     # fusion_method = project_config["fusion_method"]
