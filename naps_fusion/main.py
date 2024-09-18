@@ -387,6 +387,9 @@ def main():
     Activities, Sensors = Set_Act_Sens()  # creating two dicts for sensor and activity
 
     print("\n#------------- Reading in the Data of Users -------------#\n")
+    if not os.path.exists(config.data_dir):
+       print('Data directory does not exist!')
+       sys.exit(1)
     dataset_uuid = readdata_csv(
         config.data_dir
     )  # reading all data and storing in "dataset" a DF

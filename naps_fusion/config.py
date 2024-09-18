@@ -1,9 +1,9 @@
 """
 NAPS Fusion configuration file
 """
-results_dir = "results/naps.baseline_original"
-data_dir = "data/NAPS-Fusion/datasets/"
-cvdir = "data/NAPS-Fusion/cv5Folds/cv_5_folds/"
+results_dir = "../results/naps.baseline_original"
+data_dir = "../data/NAPS-Fusion/datasets/"
+cvdir = "../data/NAPS-Fusion/cv5Folds/cv_5_folds/"
 
 # There are also "Mag", "AP", "LF", "Compass" sensors
 # NOTE: Should it be WAcc instead of W_acc? Nope, code gives sensor a different

@@ -1,6 +1,6 @@
-data_dir = "data/NAPS-Fusion/datasets"
-data_compressed_dir = "data/NAPS-Fusion/ExtraSensory.per_uuid_features_labels"
-cross_validation_dir = "data/NAPS-Fusion/cv5Folds/cv_5_folds"
+data_dir = "../data/NAPS-Fusion/datasets"
+data_compressed_dir = "../data/NAPS-Fusion/ExtraSensory.per_uuid_features_labels"
+cross_validation_dir = "../data/NAPS-Fusion/cv5Folds/cv_5_folds"
 fusion_method = "naps-fusion"
 activities = ["FIX_walking"]
 sensor_combination = [["Acc", "WAcc"]]
