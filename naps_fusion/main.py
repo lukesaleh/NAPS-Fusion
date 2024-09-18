@@ -308,7 +308,7 @@ def train_NAPS_Models(
     t1 = timeit.default_timer()
     # print('\tgetting training data took : ', t1-t0)
 
-    smt = SMOTE
+    smt = SMOTE()
     X_train_tmp, y_train_tmp = smt.fit_resample(X_train, y_train)
     t2 = timeit.default_timer()
     # print('\tSMOTE took : ', t2-t1)
