@@ -697,7 +697,7 @@ def main():
             Selected_Models_idx = Model_Selector(
                 Uncertainty_Mat, config.models_per_rp, num_rp, 1
             )
-            fusion_result, fusion_mass = Fuse_and_Predict(
+            fusion_result = Fuse_and_Predict(
                 Selected_Models_idx,
                 NAPS_models,
                 config.FOD,
