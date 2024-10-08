@@ -595,8 +595,11 @@ def main():
     print(f"Test dataset has {num_test_points} samples")
 
     if config.parallelize:
-
         def Fun(idx):
+            import numpy as np
+            import config
+            from main import Xy
+            from Naive_Adaptive_Sensor_Fusion import Model_Selector, Fuse_and_Predict
             # print(idx, "/", len(test_dataset))
             test_sample = test_dataset.iloc[idx, :]
             test_sample = test_sample.to_frame().transpose()

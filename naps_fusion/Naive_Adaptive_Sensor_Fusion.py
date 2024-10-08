@@ -61,6 +61,8 @@ class DS_Model:
         probability = self.clf.predict_proba(X)
         self.mass[self.Response_Variables[0]] = probability[0, 0] * (1 - uncertainty)
         self.mass[self.Response_Variables[1]] = probability[0, 1] * (1 - uncertainty)
+    
+        #TODO: Check if it sums to 1-uncertainty
 
     def Bags_Trainer(self, X_train, y_train, ratio, num_bags, seed_number):
         """
@@ -116,11 +118,11 @@ class DS_Model:
         T = len(self.Bags)  # total number of the bags
 
         for i in range(T):
-            V[int(self.Bags[i].predict(X_test_single))] += 1
+            V[int(self.Bags[i].predict(X_test_single))] += 1 
 
         Uncertainty_c = 1 - np.sqrt(np.sum(np.power((V / T - 1 / C), 2))) / np.sqrt(
             (C - 1) / C
-        )
+        ) #this is part of the mass assignment
         return Uncertainty_c
 
 
