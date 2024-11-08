@@ -590,8 +590,9 @@ def main():
 
     y_test_ag = np.zeros([len(test_dataset), len(config.FOD)])
     y_pred_ag = np.zeros([len(test_dataset), len(config.FOD)])
-    model_auc_ag = np.zeros([len(test_dataset), len(config.FOD)])
-
+    model_auc_ag = np.zeros([len(test_dataset), num_rp*num_fs])
+    model_test_ag = np.zeros([len(test_dataset), len(config.FOD)])
+    model_pred_ag2 = np.zeros([len(test_dataset), num_rp*num_fs])
     model_pred_ag = np.zeros([len(test_dataset), len(config.FOD)])
 
     num_test_points = len(test_dataset)
@@ -656,7 +657,7 @@ def main():
                 config.models_per_rp,
             )
 
-            return y_test_single, y_pred_single, auc(fpr, tpr) #FIXME: return the flattened predictions and trues, use for auc later
+            return y_test_single, y_pred_single, flattened_list, flattened_true #FIXME: return the flattened predictions and trues, use for auc later
 
         # defaults to number of available CPU's
         test_pool = Pool()
@@ -674,12 +675,13 @@ def main():
         ):
             y_test_ag[ind] = res[0]
             y_pred_ag[ind] = res[1]
-            model_auc_ag[ind] = res[2]
+            model_pred_ag2[ind] = res[2]
+            model_true_ag = res[3]
 
         print(timeit.default_timer() - t_pool_start)
     else:
         model_auc_ag = []
-        for t in range(0, len(test_dataset), 250):
+        for t in range(0, len(test_dataset)):
             print(t, "/", len(test_dataset))
             test_sample = test_dataset.iloc[t, :]
             test_sample = test_sample.to_frame().transpose()
@@ -744,6 +746,10 @@ def main():
     model_auc_vector = model_auc_ag
     if config.parallelize:
         model_auc_vector = [row[0] for row in model_auc_ag]
+        model_true_flat = [item for sublist in model_true_ag for item in sublist ]
+        model_pred_flat = [item for sublist in  model_pred_ag2 for item in sublist]
+        fpr, tpr, threshold = roc_curve(model_true_flat, model_pred_flat)     
+
 
     # conf_mat = confusion_matrix(y_test_ag, y_pred_ag)
     # accuracy = accuracy_score(y_test_ag, y_pred_ag)
