@@ -19,7 +19,7 @@ from timeit import default_timer as timer
 import random
 import glob
 import multiprocessing.pool as mp
-
+from sklearn.metrics import roc_curve, auc
 import pandas as pd
 import numpy as np
 from sklearn import preprocessing
@@ -590,6 +590,9 @@ def main():
 
     y_test_ag = np.zeros([len(test_dataset), len(config.FOD)])
     y_pred_ag = np.zeros([len(test_dataset), len(config.FOD)])
+    model_auc_ag = np.zeros([len(test_dataset), len(config.FOD)])
+
+    model_pred_ag = np.zeros([len(test_dataset), len(config.FOD)])
 
     num_test_points = len(test_dataset)
     print(f"Test dataset has {num_test_points} samples")
@@ -599,6 +602,7 @@ def main():
             import numpy as np
             import config
             from main import Xy
+            from sklearn.metrics import roc_curve, auc
             from Naive_Adaptive_Sensor_Fusion import Model_Selector, Fuse_and_Predict
             # print(idx, "/", len(test_dataset))
             test_sample = test_dataset.iloc[idx, :]
@@ -608,7 +612,9 @@ def main():
             assert np.sum(y_test_single) == 1
 
             Uncertainty_Mat = np.ones([num_rp, num_fs])
-
+            auc_scores = []
+            y_model_pred = []
+            y_true = []
             for i in range(num_rp):
                 for j in range(num_fs):
                     X_test, y_test, y1, y2 = Xy(
@@ -621,13 +627,20 @@ def main():
                         impute=True,
                     )
                     if len(X_test) != 0 or len(y_test) != 0:
-                        Uncertainty_Mat[i][j] = (
+                       #TODO: try larger number of bags to see influence on votes
+                       Uncertainty_Mat[i][j] = (
                             NAPS_models[i][j].Uncertainty_B
-                            + NAPS_models[i][j].Uncertainty_Context(X_test)
+                            + NAPS_models[i][j].Uncertainty_Context(X_test, y_test)
                         ) / 2
                     NAPS_models[i][j].Mass_Function_Setter(
                         Uncertainty_Mat[i][j], X_test
                     )
+                    y_true.append(NAPS_models[i][j].actual_preds)
+                    y_model_pred.append(NAPS_models[i][j].test_inputs)
+            flattened_list = [item for sublist in y_model_pred for item in sublist]
+            flattened_true = [item for sublist in y_true for item in sublist]
+            #TODO: examine these to see why there are NaN values, examine type differences
+            fpr, tpr, threshold = roc_curve(flattened_true, flattened_list)     
 
             # =========\ Model Selection /==========#
 
@@ -643,7 +656,7 @@ def main():
                 config.models_per_rp,
             )
 
-            return y_test_single, y_pred_single
+            return y_test_single, y_pred_single, auc(fpr, tpr) #FIXME: return the flattened predictions and trues, use for auc later
 
         # defaults to number of available CPU's
         test_pool = Pool()
@@ -661,10 +674,12 @@ def main():
         ):
             y_test_ag[ind] = res[0]
             y_pred_ag[ind] = res[1]
+            model_auc_ag[ind] = res[2]
 
         print(timeit.default_timer() - t_pool_start)
     else:
-        for t in range(len(test_dataset)):
+        model_auc_ag = []
+        for t in range(0, len(test_dataset), 250):
             print(t, "/", len(test_dataset))
             test_sample = test_dataset.iloc[t, :]
             test_sample = test_sample.to_frame().transpose()
@@ -674,7 +689,9 @@ def main():
             assert np.sum(y_test_ag == 1)
 
             Uncertainty_Mat = np.ones([num_rp, num_fs])
-
+            
+            y_model_pred = []
+            y_true = []
             for i in range(num_rp):
                 for j in range(num_fs):
                     X_test, y_test, y1, y2 = Xy(
@@ -689,12 +706,21 @@ def main():
                     if len(X_test) != 0 or len(y_test) != 0:
                         Uncertainty_Mat[i][j] = (
                             NAPS_models[i][j].Uncertainty_B
-                            + NAPS_models[i][j].Uncertainty_Context(X_test)
+                            + NAPS_models[i][j].Uncertainty_Context(X_test, y_test)
                         ) / 2
                     NAPS_models[i][j].Mass_Function_Setter(
                         Uncertainty_Mat[i][j], X_test
                     )
-
+                    # NAPS_models[i][j].Mass_Function_Printer()
+                    y_true.append(NAPS_models[i][j].actual_preds)
+                    y_model_pred.append(NAPS_models[i][j].test_inputs)
+                    #auc_score.append(NAPS_models[i][j].Model_AUC())
+            #FIXME: Don't do per sample, do after all samples
+            flattened_list = [item for sublist in y_model_pred for item in sublist]
+            flattened_true = [item for sublist in y_true for item in sublist]
+            fpr, tpr, threshold = roc_curve(flattened_true, flattened_list)
+            model_auc_ag.append(auc(fpr, tpr))
+            print(auc(fpr, tpr))
             # =========\ Model Selection /==========#
 
             Selected_Models_idx = Model_Selector(
@@ -709,25 +735,31 @@ def main():
                 config.models_per_rp,
             )
             y_pred_ag[t, :] = fusion_result
-
+            
     stop5 = timeit.default_timer()
     print("Testing took:   ", int(stop5 - stop4))
 
     y_test_vector = np.argmax(y_test_ag, axis=1)
     y_pred_vector = np.argmax(y_pred_ag, axis=1)
+    model_auc_vector = model_auc_ag
+    if config.parallelize:
+        model_auc_vector = [row[0] for row in model_auc_ag]
 
     # conf_mat = confusion_matrix(y_test_ag, y_pred_ag)
     # accuracy = accuracy_score(y_test_ag, y_pred_ag)
     # balanced_accuracy = balanced_accuracy_score(y_test_ag, y_pred_ag)
     # f1 = f1_score(y_test_ag, y_pred_ag)
-
+    
+    print('AUC for logistic regression models in bags:',model_auc_vector)
     # TODO: Automate this
     pretty_labels = {0: "Lying down", 1: "Sitting", 2: "Standing", 3: "Walking"}
     # pretty_labels =  {idx: get_pretty_label_name(raw_label) for idx, raw_label in enumerate(config.FOD)}
     cm = ConfusionMatrix(actual_vector=y_test_vector, predict_vector=y_pred_vector)
     cm.relabel(mapping=pretty_labels)
     print(cm)
-
+    print('Best model AUC:',max(model_auc_vector))
+    print('Worst model AUC:',min(model_auc_vector))
+    print('Average model AUC',np.nanmean(model_auc_vector))
     plot_confusion_matrix(
         y_test_vector,
         y_pred_vector,

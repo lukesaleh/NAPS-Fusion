@@ -4,8 +4,9 @@ Created on Tue Oct 29 18:13:08 2019
 
 @author: 14342
 """
-from pyds_local import *
 
+from pyds_local import *
+from sklearn.metrics import roc_auc_score, roc_curve, auc
 import random
 import numpy as np
 import sys
@@ -52,18 +53,23 @@ class DS_Model:
         self.Bags = []  # list of the bags for this model
         self.Uncertainty_B = 0  # Uncertainty of the biased model
         self.mass = MassFunction()  # Mass function of the model
+        self.test_inputs = []
+        self.actual_preds = []
 
     def Mass_Function_Setter(self, uncertainty, X):
         """
         We used pyds package (a dempster shafer package) to define the mass function
         given the probabilities and uncertainty.
         """
-        probability = self.clf.predict_proba(X)
+        probability = self.clf.predict_proba(X) 
         self.mass[self.Response_Variables[0]] = probability[0, 0] * (1 - uncertainty)
         self.mass[self.Response_Variables[1]] = probability[0, 1] * (1 - uncertainty)
-    
-        #TODO: Check if it sums to 1-uncertainty
+        #Needs exponentiation formula from 4.2.3
 
+        #TODO: Check if it sums to 1-uncertainty
+    def Mass_Function_Printer(self):
+        print(self.mass)
+    
     def Bags_Trainer(self, X_train, y_train, ratio, num_bags, seed_number):
         """
         This function trains bags
@@ -97,7 +103,12 @@ class DS_Model:
 
             self.Bags[i].fit(X_train_Bag, y_train_Bag)
 
-    def Uncertainty_Context(self, X_test_single):
+    def Model_AUC(self):
+        fpr, tpr, thresolds = roc_curve(self.actual_preds, self.test_inputs)
+
+        return auc(fpr, tpr)      
+
+    def Uncertainty_Context(self, X_test_single, Y_test_single):
         """
         This function calculates the uncertainty of the contextual meaning by
         calculating the votes from all the bags.
@@ -118,11 +129,27 @@ class DS_Model:
         T = len(self.Bags)  # total number of the bags
 
         for i in range(T):
-            V[int(self.Bags[i].predict(X_test_single))] += 1 
+            pred = self.Bags[i].predict(X_test_single)
+            
+            # AUC per bag, combine single tests into one list. Then, predict on the whole set and use that for AUC
+            
+            
+            V[int(pred)] += 1 
+        max_value = max(V)
+        max_indices = [i for i, value in enumerate(V) if value == max_value]
+        choice = random.choice(max_indices)
+        self.test_inputs.append(choice)
+        self.actual_preds.append(int(Y_test_single.iloc[0]))
 
+        #find majority vote, for 50/50 just choose first value
+        #Potentially check weighting of mass vector
         Uncertainty_c = 1 - np.sqrt(np.sum(np.power((V / T - 1 / C), 2))) / np.sqrt(
-            (C - 1) / C
-        ) #this is part of the mass assignment
+            (C - 1) / C) #this is part of the mass assignment
+
+        if(Uncertainty_c > 0 and Uncertainty_c < 0.5):
+            print(Uncertainty_c)
+        # else:
+        #     print('0')
         return Uncertainty_c
 
 
@@ -342,7 +369,7 @@ def Model_Selector(uncertainty_m, models_per_rp, num_rp, fs_axis):
 
     for i in range(models_per_rp):
         selected_models_idx[:, i] = np.argwhere(index_m == i)[:, 1]
-
+    
     return selected_models_idx
 
 
