@@ -594,6 +594,7 @@ def main():
     model_test_ag = np.zeros([len(test_dataset), len(config.FOD)])
     model_pred_ag2 = np.zeros([len(test_dataset), num_rp*num_fs])
     model_pred_ag = np.zeros([len(test_dataset), len(config.FOD)])
+    model_true_ag = np.zeros([len(test_dataset), num_rp*num_fs ])
 
     num_test_points = len(test_dataset)
     print(f"Test dataset has {num_test_points} samples")
@@ -676,12 +677,13 @@ def main():
             y_test_ag[ind] = res[0]
             y_pred_ag[ind] = res[1]
             model_pred_ag2[ind] = res[2]
-            model_true_ag = res[3]
+            model_true_ag[ind] = res[3]
 
         print(timeit.default_timer() - t_pool_start)
     else:
-        model_auc_ag = []
-        for t in range(0, len(test_dataset)):
+        y_model_pred = []
+        y_true = []
+        for t in range(0, len(test_dataset), 500):
             print(t, "/", len(test_dataset))
             test_sample = test_dataset.iloc[t, :]
             test_sample = test_sample.to_frame().transpose()
@@ -692,8 +694,6 @@ def main():
 
             Uncertainty_Mat = np.ones([num_rp, num_fs])
             
-            y_model_pred = []
-            y_true = []
             for i in range(num_rp):
                 for j in range(num_fs):
                     X_test, y_test, y1, y2 = Xy(
@@ -718,13 +718,8 @@ def main():
                     y_model_pred.append(NAPS_models[i][j].test_inputs)
                     #auc_score.append(NAPS_models[i][j].Model_AUC())
             #FIXME: Don't do per sample, do after all samples
-            flattened_list = [item for sublist in y_model_pred for item in sublist]
-            flattened_true = [item for sublist in y_true for item in sublist]
-            fpr, tpr, threshold = roc_curve(flattened_true, flattened_list)
-            model_auc_ag.append(auc(fpr, tpr))
-            print(auc(fpr, tpr))
+            
             # =========\ Model Selection /==========#
-
             Selected_Models_idx = Model_Selector(
                 Uncertainty_Mat, config.models_per_rp, num_rp, 1
             )
@@ -749,23 +744,24 @@ def main():
         model_true_flat = [item for sublist in model_true_ag for item in sublist ]
         model_pred_flat = [item for sublist in  model_pred_ag2 for item in sublist]
         fpr, tpr, threshold = roc_curve(model_true_flat, model_pred_flat)     
-
-
+        print('Model auc:', auc(fpr, tpr)) #TODO: save to pickle
+        
     # conf_mat = confusion_matrix(y_test_ag, y_pred_ag)
     # accuracy = accuracy_score(y_test_ag, y_pred_ag)
     # balanced_accuracy = balanced_accuracy_score(y_test_ag, y_pred_ag)
     # f1 = f1_score(y_test_ag, y_pred_ag)
-    
-    print('AUC for logistic regression models in bags:',model_auc_vector)
+    else:
+        fpr, tpr, threshold = roc_curve(y_true, y_model_pred)
+        print('AUC for logistic regression models in bags:',auc(fpr, tpr)) #TODO: Save to pickle
     # TODO: Automate this
     pretty_labels = {0: "Lying down", 1: "Sitting", 2: "Standing", 3: "Walking"}
     # pretty_labels =  {idx: get_pretty_label_name(raw_label) for idx, raw_label in enumerate(config.FOD)}
     cm = ConfusionMatrix(actual_vector=y_test_vector, predict_vector=y_pred_vector)
     cm.relabel(mapping=pretty_labels)
     print(cm)
-    print('Best model AUC:',max(model_auc_vector))
-    print('Worst model AUC:',min(model_auc_vector))
-    print('Average model AUC',np.nanmean(model_auc_vector))
+    # print('Best model AUC:',max(model_auc_vector))
+    # print('Worst model AUC:',min(model_auc_vector))
+    # print('Average model AUC',np.nanmean(model_auc_vector))
     plot_confusion_matrix(
         y_test_vector,
         y_pred_vector,

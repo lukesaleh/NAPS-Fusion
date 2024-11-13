@@ -53,8 +53,8 @@ class DS_Model:
         self.Bags = []  # list of the bags for this model
         self.Uncertainty_B = 0  # Uncertainty of the biased model
         self.mass = MassFunction()  # Mass function of the model
-        self.test_inputs = []
-        self.actual_preds = []
+        self.test_inputs = 0
+        self.actual_preds = 0
 
     def Mass_Function_Setter(self, uncertainty, X):
         """
@@ -138,8 +138,8 @@ class DS_Model:
         max_value = max(V)
         max_indices = [i for i, value in enumerate(V) if value == max_value]
         choice = random.choice(max_indices)
-        self.test_inputs.append(choice)
-        self.actual_preds.append(int(Y_test_single.iloc[0]))
+        self.test_inputs = choice
+        self.actual_preds = int(Y_test_single.iloc[0])
 
         #find majority vote, for 50/50 just choose first value
         #Potentially check weighting of mass vector
