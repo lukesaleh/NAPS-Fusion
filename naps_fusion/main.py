@@ -642,8 +642,8 @@ def main():
                     )
                     y_true.append(NAPS_models[i][j].actual_preds)
                     y_model_pred.append(NAPS_models[i][j].test_inputs)
-            flattened_list = [item for sublist in y_model_pred for item in sublist]
-            flattened_true = [item for sublist in y_true for item in sublist]
+            #flattened_list = [item for sublist in y_model_pred for item in sublist]
+            #flattened_true = [item for sublist in y_true for item in sublist]
             
 
             # =========\ Model Selection /==========#
@@ -660,7 +660,7 @@ def main():
                 config.models_per_rp,
             )
 
-            return y_test_single, y_pred_single, flattened_list, flattened_true 
+            return y_test_single, y_pred_single, y_model_pred, y_true 
 
         # defaults to number of available CPU's
         test_pool = Pool()
@@ -673,20 +673,20 @@ def main():
         #TODO: try catch on the imap, see values and types for imap and the stuff withing
         #TODO: when seeing exception, pause the program
 
-        try:
-            enumerate(test_pool.imap(
-                run_dill_encoded,
-                zip(num_test_points * [encoded_fun], range(num_test_points)),
-                chunk_size,
-            ))
+        # try:
+        #     enumerate(test_pool.imap(
+        #         run_dill_encoded,
+        #         zip(num_test_points * [encoded_fun], range(num_test_points)),
+        #         chunk_size,
+        #     ))
         
-        except TypeError:
-            print('Type error achieved')
-            print(type(test_pool.imap(
-                run_dill_encoded,
-                zip(num_test_points * [encoded_fun], range(num_test_points)),
-                chunk_size,
-            )))
+        # except TypeError:
+        #     print('Type error achieved')
+        #     print(type(test_pool.imap(
+        #         run_dill_encoded,
+        #         zip(num_test_points * [encoded_fun], range(num_test_points)),
+        #         chunk_size,
+        #     )))
 
         for ind, res in enumerate(
             test_pool.imap(
