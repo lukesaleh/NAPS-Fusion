@@ -591,9 +591,7 @@ def main():
     y_test_ag = np.zeros([len(test_dataset), len(config.FOD)])
     y_pred_ag = np.zeros([len(test_dataset), len(config.FOD)])
     model_auc_ag = np.zeros([len(test_dataset), num_rp*num_fs])
-    model_test_ag = np.zeros([len(test_dataset), len(config.FOD)])
     model_pred_ag2 = np.zeros([len(test_dataset), num_rp*num_fs])
-    model_pred_ag = np.zeros([len(test_dataset), len(config.FOD)])
     model_true_ag = np.zeros([len(test_dataset), num_rp*num_fs ])
 
     num_test_points = len(test_dataset)
@@ -663,7 +661,7 @@ def main():
                 config.models_per_rp,
             )
 
-            return y_test_single, y_pred_single, flattened_list, flattened_true #FIXME: return the flattened predictions and trues, use for auc later
+            return y_test_single, y_pred_single, flattened_list, flattened_true 
 
         # defaults to number of available CPU's
         test_pool = Pool()
