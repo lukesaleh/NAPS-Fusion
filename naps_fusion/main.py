@@ -644,8 +644,7 @@ def main():
                     y_model_pred.append(NAPS_models[i][j].test_inputs)
             flattened_list = [item for sublist in y_model_pred for item in sublist]
             flattened_true = [item for sublist in y_true for item in sublist]
-            #TODO: examine these to see why there are NaN values, examine type differences
-            fpr, tpr, threshold = roc_curve(flattened_true, flattened_list)     
+            
 
             # =========\ Model Selection /==========#
 
@@ -670,6 +669,25 @@ def main():
 
         t_pool_start = timeit.default_timer()
         encoded_fun = dill.dumps(Fun)
+
+        #TODO: try catch on the imap, see values and types for imap and the stuff withing
+        #TODO: when seeing exception, pause the program
+
+        try:
+            enumerate(test_pool.imap(
+                run_dill_encoded,
+                zip(num_test_points * [encoded_fun], range(num_test_points)),
+                chunk_size,
+            ))
+        
+        except TypeError:
+            print('Type error achieved')
+            print(type(test_pool.imap(
+                run_dill_encoded,
+                zip(num_test_points * [encoded_fun], range(num_test_points)),
+                chunk_size,
+            )))
+
         for ind, res in enumerate(
             test_pool.imap(
                 run_dill_encoded,
