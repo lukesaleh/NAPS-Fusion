@@ -629,11 +629,16 @@ def main():
                         impute=True,
                     )
                     if len(X_test) != 0 or len(y_test) != 0:
-                       #TODO: try larger number of bags to see influence on votes
-                       Uncertainty_Mat[i][j] = (
-                            NAPS_models[i][j].Uncertainty_B
-                            + NAPS_models[i][j].Uncertainty_Context(X_test, y_test)
-                        ) / 2
+                    #    #TODO: try larger number of bags to see influence on votes
+                    #    Uncertainty_Mat[i][j] = (
+                    #         NAPS_models[i][j].Uncertainty_B
+                    #         + NAPS_models[i][j].Uncertainty_Context(X_test, y_test)
+                    #     ) / 2
+                        theta1 = NAPS_models[i][j].Uncertainty_B
+                        theta2 = NAPS_models[i][j].Uncertainty_Context(X_test)
+                        p = 0.5 # Hyperparameter
+                        d = (np.exp(1 - p) - 1) ** np.e
+                        Uncertainty_Mat[i][j] = (1 - np.exp(-0.5 * (theta1 + theta2) / d)) / (1 - np.exp(-1 / d))
                     NAPS_models[i][j].Mass_Function_Setter(
                         Uncertainty_Mat[i][j], X_test
                     )
@@ -683,7 +688,7 @@ def main():
     else:
         y_model_pred = []
         y_true = []
-        for t in range(0, len(test_dataset), 500):
+        for t in range(0, len(test_dataset), 50):
             print(t, "/", len(test_dataset))
             test_sample = test_dataset.iloc[t, :]
             test_sample = test_sample.to_frame().transpose()
@@ -706,10 +711,15 @@ def main():
                         impute=True,
                     )
                     if len(X_test) != 0 or len(y_test) != 0:
-                        Uncertainty_Mat[i][j] = (
-                            NAPS_models[i][j].Uncertainty_B
-                            + NAPS_models[i][j].Uncertainty_Context(X_test, y_test)
-                        ) / 2
+                        # Uncertainty_Mat[i][j] = (
+                        #     NAPS_models[i][j].Uncertainty_B
+                        #     + NAPS_models[i][j].Uncertainty_Context(X_test, y_test)
+                        # ) / 2
+                        theta1 = NAPS_models[i][j].Uncertainty_B
+                        theta2 = NAPS_models[i][j].Uncertainty_Context(X_test, y_test)
+                        p = 0.5 # Hyperparameter
+                        d = (np.exp(1 - p) - 1) ** np.e
+                        Uncertainty_Mat[i][j] = (1 - np.exp(-0.5 * (theta1 + theta2) / d)) / (1 - np.exp(-1 / d))
                     NAPS_models[i][j].Mass_Function_Setter(
                         Uncertainty_Mat[i][j], X_test
                     )
