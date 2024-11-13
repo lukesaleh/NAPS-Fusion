@@ -25,5 +25,5 @@ num_bags = 4
 models_per_rp = 2  # number of models to select for the fusion per response permutation
 feature_range = range(1, 225)  # range of the column number of all features
 num_prc = 7  # number of processors to split the job during parallelization
-parallelize = False
+parallelize = True
 random_seed_number = 42

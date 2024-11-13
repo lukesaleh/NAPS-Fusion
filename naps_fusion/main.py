@@ -635,7 +635,7 @@ def main():
                     #         + NAPS_models[i][j].Uncertainty_Context(X_test, y_test)
                     #     ) / 2
                         theta1 = NAPS_models[i][j].Uncertainty_B
-                        theta2 = NAPS_models[i][j].Uncertainty_Context(X_test)
+                        theta2 = NAPS_models[i][j].Uncertainty_Context(X_test, y_test)
                         p = 0.5 # Hyperparameter
                         d = (np.exp(1 - p) - 1) ** np.e
                         Uncertainty_Mat[i][j] = (1 - np.exp(-0.5 * (theta1 + theta2) / d)) / (1 - np.exp(-1 / d))
