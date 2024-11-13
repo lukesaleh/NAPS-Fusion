@@ -636,8 +636,8 @@ def main():
                     #     ) / 2
                         theta1 = NAPS_models[i][j].Uncertainty_B
                         theta2 = NAPS_models[i][j].Uncertainty_Context(X_test, y_test)
-                        p = 0.5 # Hyperparameter
-                        d = (np.exp(1 - p) - 1) ** np.e
+                        param = 0.5 # Hyperparameter
+                        d = (np.exp(1 - param) - 1) ** np.e
                         Uncertainty_Mat[i][j] = (1 - np.exp(-0.5 * (theta1 + theta2) / d)) / (1 - np.exp(-1 / d))
                     NAPS_models[i][j].Mass_Function_Setter(
                         Uncertainty_Mat[i][j], X_test
@@ -727,7 +727,7 @@ def main():
                     y_true.append(NAPS_models[i][j].actual_preds)
                     y_model_pred.append(NAPS_models[i][j].test_inputs)
                     #auc_score.append(NAPS_models[i][j].Model_AUC())
-            #FIXME: Don't do per sample, do after all samples
+            
             
             # =========\ Model Selection /==========#
             Selected_Models_idx = Model_Selector(
