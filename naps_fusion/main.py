@@ -388,7 +388,7 @@ def main():
     # # Stochastic gradient descent optimizer.
     # optimizer = tf.optimizers.SGD(learning_rate)
 
-    if Using_UCSD == True:
+    if config.Using_UCSD == True:
 
         # =============================================================================#
         # -------------------------------| INPUTS |------------------------------------#
