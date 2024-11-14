@@ -322,6 +322,9 @@ def train_NAPS_Models(
     # print('\tgetting training data took : ', t1-t0)
 
     smt = SMOTE()
+
+    #FIXME: Add SMOTE onto the augmented data
+    #NOTE: Need to look at what Napoli did in the paper
     X_train_tmp, y_train_tmp = smt.fit_resample(X_train, y_train)
     t2 = timeit.default_timer()
     # print('\tSMOTE took : ', t2-t1)
@@ -404,7 +407,7 @@ def main():
         print("\n#------------- Reading in the Data of Users -------------#\n")
         if not os.path.exists(config.data_dir):
             print('Data directory does not exist!')
-        sys.exit(1)
+            sys.exit(1)
 
         dataset_uuid = readdata_csv(
             config.data_dir
