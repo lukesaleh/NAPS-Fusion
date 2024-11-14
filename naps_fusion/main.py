@@ -15,6 +15,7 @@ from pyds_local import *
 from Naive_Adaptive_Sensor_Fusion import *
 import config
 
+
 from timeit import default_timer as timer
 import random
 import glob
@@ -248,6 +249,18 @@ def train_test_spl(test_fold, num_folds, fold_dir, grand_dataset):
     return (train_dataset, test_dataset)
 
 
+def train_test_split_new(full_dataset_directory):
+
+    # Load the dataset from the directory
+    data = pd.read_csv(full_dataset_directory)
+    
+    # Split the dataset into train and test sets with test size of 0.2 and random state of 42
+    train_dataset, test_dataset = train_test_split(data, test_size=0.2, random_state=42)
+
+    return (train_dataset, test_dataset)
+
+
+
 def get_folds_uuids(fold_dir):
     """
     The function gets the directory where the the folds text files are located
@@ -375,85 +388,140 @@ def main():
     # # Stochastic gradient descent optimizer.
     # optimizer = tf.optimizers.SGD(learning_rate)
 
-    # =============================================================================#
-    # -------------------------------| INPUTS |------------------------------------#
-    # =============================================================================#
-    start_time = timeit.default_timer()
+    if Using_UCSD == True:
 
-    # =============================================================================#
-    # -------------------------| Reading in the data |-----------------------------#
-    # =============================================================================#
+        # =============================================================================#
+        # -------------------------------| INPUTS |------------------------------------#
+        # =============================================================================#
+        start_time = timeit.default_timer()
 
-    Activities, Sensors = Set_Act_Sens()  # creating two dicts for sensor and activity
+        # =============================================================================#
+        # -------------------------| Reading in the data |-----------------------------#
+        # =============================================================================#
 
-    print("\n#------------- Reading in the Data of Users -------------#\n")
-    if not os.path.exists(config.data_dir):
-       print('Data directory does not exist!')
-       sys.exit(1)
-    dataset_uuid = readdata_csv(
-        config.data_dir
-    )  # reading all data and storing in "dataset" a DF
-    stop1 = timeit.default_timer()
+        Activities, Sensors = Set_Act_Sens()  # creating two dicts for sensor and activity
 
-    print("Reading the data took:   ", int(stop1 - start_time))
+        print("\n#------------- Reading in the Data of Users -------------#\n")
+        if not os.path.exists(config.data_dir):
+            print('Data directory does not exist!')
+        sys.exit(1)
 
-    uuids = list(dataset_uuid.keys())
+        dataset_uuid = readdata_csv(
+            config.data_dir
+        )  # reading all data and storing in "dataset" a DF
+        stop1 = timeit.default_timer()
 
-    print("\n#-------------- Combining the Data of Users-------------#\n")
+        print("Reading the data took:   ", int(stop1 - start_time))
 
-    # We concatenate the data of all participants (60) to get one dataset for all
-    dataset_ag = dataset_uuid[
-        uuids[0]
-    ]  # "dataset_ag" is the aggregation of all user's data
-    for i in range(1, len(uuids)):
-        dataset_ag = pd.concat(
-            [dataset_ag, dataset_uuid[uuids[i]]], axis=0, ignore_index=True
+        uuids = list(dataset_uuid.keys())
+
+        print("\n#-------------- Combining the Data of Users-------------#\n")
+
+        # We concatenate the data of all participants (60) to get one dataset for all
+        dataset_ag = dataset_uuid[
+            uuids[0]
+        ]  # "dataset_ag" is the aggregation of all user's data
+        for i in range(1, len(uuids)):
+            dataset_ag = pd.concat(
+                [dataset_ag, dataset_uuid[uuids[i]]], axis=0, ignore_index=True
+            )
+
+        dataset_ag.iloc[:, config.feature_range] = preprocessing.scale(
+            dataset_ag.iloc[:, config.feature_range]
+        )
+        stop2 = timeit.default_timer()
+
+        print("Combining the data took:   ", int(stop2 - stop1))
+
+        # =============================================================================#
+        # -----------------------------| DST Setups |----------------------------------#
+        # =============================================================================#
+
+        # We create feature sets, a sample mass function (initialized to 0) and response
+        # permutations 1 and 2 in which corresponding elements are exclusive and exhaustive
+
+        feature_sets = feature_set(
+            config.sensors_to_fuse,
+            config.feature_sets_st,
+            Sensors,
+            config.random_seed_number,
+            feat_set_count=config.feature_sets_count,
+        )
+        mass_template = BPA_builder(config.FOD)
+        Response_Perm_1, Response_Perm_2 = pair_resp(mass_template)
+
+        num_p = len(config.FOD)
+        num_fs = len(feature_sets)
+        num_rp = len(Response_Perm_1)
+        num_folds = 5
+
+        # smt = SMOTE()
+
+        # find the train_dataset
+        # at personal level:
+        print("\n#-------------- Obtaining Training Dataset -------------#\n")
+
+        # TODO: Do they only look at 1 fold? That seems to be the case
+        train_dataset, test_dataset = train_test_spl(
+            0, num_folds, config.cvdir, dataset_uuid
         )
 
-    dataset_ag.iloc[:, config.feature_range] = preprocessing.scale(
-        dataset_ag.iloc[:, config.feature_range]
-    )
-    stop2 = timeit.default_timer()
+        stop3 = timeit.default_timer()
+        print("Obtaining the training dataset took:   ", int(stop3 - stop2))
 
-    print("Combining the data took:   ", int(stop2 - stop1))
+        print("Training dataset has  {}  samples".format(len(train_dataset)))
 
-    # =============================================================================#
-    # -----------------------------| DST Setups |----------------------------------#
-    # =============================================================================#
+    else:
 
-    # We create feature sets, a sample mass function (initialized to 0) and response
-    # permutations 1 and 2 in which corresponding elements are exclusive and exhaustive
+        # =============================================================================#
+        # -------------------------------| INPUTS |------------------------------------#
+        # =============================================================================#
+        start_time = timeit.default_timer()
 
-    feature_sets = feature_set(
-        config.sensors_to_fuse,
-        config.feature_sets_st,
-        Sensors,
-        config.random_seed_number,
-        feat_set_count=config.feature_sets_count,
-    )
-    mass_template = BPA_builder(config.FOD)
-    Response_Perm_1, Response_Perm_2 = pair_resp(mass_template)
+        # =============================================================================#
+        # -------------------------| Reading in the data |-----------------------------#
+        # =============================================================================#
+        Activities, Sensors = config.Set_Act_Sens_NEW()  # creating two dicts for sensor and activity
 
-    num_p = len(config.FOD)
-    num_fs = len(feature_sets)
-    num_rp = len(Response_Perm_1)
-    num_folds = 5
+        #stop2 = timeit.default_timer()
 
-    # smt = SMOTE()
+        #print("Combining the data took:   ", int(stop2 - stop1))
 
-    # find the train_dataset
-    # at personal level:
-    print("\n#-------------- Obtaining Training Dataset -------------#\n")
+        # =============================================================================#
+        # -----------------------------| DST Setups |----------------------------------#
+        # =============================================================================#
 
-    # TODO: Do they only look at 1 fold? That seems to be the case
-    train_dataset, test_dataset = train_test_spl(
-        0, num_folds, config.cvdir, dataset_uuid
-    )
+        # We create feature sets, a sample mass function (initialized to 0) and response
+        # permutations 1 and 2 in which corresponding elements are exclusive and exhaustive
 
-    stop3 = timeit.default_timer()
-    print("Obtaining the training dataset took:   ", int(stop3 - stop2))
+        feature_sets = feature_set(
+            config.sensors_to_fuse,
+            config.feature_sets_st,
+            Sensors,
+            config.random_seed_number,
+            feat_set_count=config.feature_sets_count,
+        )
+        mass_template = BPA_builder(config.FOD)
+        Response_Perm_1, Response_Perm_2 = pair_resp(mass_template)
 
-    print("Training dataset has  {}  samples".format(len(train_dataset)))
+        num_p = len(config.FOD)
+        num_fs = len(feature_sets)
+        num_rp = len(Response_Perm_1)
+        num_folds = 5
+
+        # smt = SMOTE()
+
+        # find the train_dataset
+        # at personal level:
+        print("\n#-------------- Obtaining Training Dataset -------------#\n")
+
+        # TODO: Do they only look at 1 fold? That seems to be the case
+        train_dataset, test_dataset = train_test_split_new(config.data_dir)
+
+        stop3 = timeit.default_timer()
+        print("Obtaining the training dataset took:   ", int(stop3 - stop2))
+
+        print("Training dataset has  {}  samples".format(len(train_dataset))) 
 
     # =============================================================================#
     # ------------------| Creating and Training all the models |-------------------#
