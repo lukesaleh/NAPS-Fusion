@@ -5,7 +5,7 @@ import numpy as np
 
 # If are using UCSD Dataset type True into Using_UCSD and if you're using any other data set type False
 
-Using_UCSD = True # Type True or False here
+Using_UCSD = False # Type True or False here
 
 if Using_UCSD == True:
 
