@@ -5,7 +5,58 @@ import numpy as np
 
 # If are using UCSD Dataset type True into Using_UCSD and if you're using any other data set type False
 
-Using_UCSD = False # Type True or False here
+import pandas as pd
+
+def convert_ground_truth_to_binary(input_file, output_file):
+    """
+    Reads a CSV file, extracts features and ground truth labels, and converts the labels into binary columns.
+    
+    Parameters:
+    - input_file (str): Path to the input CSV file.
+    - output_file (str): Path to save the output CSV file with binary class columns.
+    """
+    # Read the CSV file
+    df = pd.read_csv(input_file)
+    
+    # Assume the last column is the ground truth
+    ground_truth = df.iloc[:, -1]
+    
+    # Get unique class labels
+    unique_classes = sorted(ground_truth.unique())
+    
+    # Create binary columns for each class
+    for cls in unique_classes:
+        df[f'Class_{cls}'] = (ground_truth == cls).astype(int)
+    
+    # Drop the original ground truth column
+    df = df.drop(columns=df.columns[-2])  # Drop the original class column (before binary transformation)
+    
+    # Save the resulting DataFrame to a new CSV file
+    df.to_csv(output_file, index=False)
+    print(f"Transformed CSV file saved to {output_file}")
+
+
+def get_non_class_columns(csv_file):
+    """
+    Loads a CSV file and returns the names of all columns except the class columns.
+    
+    Parameters:
+    - csv_file (str): Path to the input CSV file.
+    
+    Returns:
+    - list: A list of column names excluding class columns.
+    """
+    # Load the DataFrame from the CSV file
+    df = pd.read_csv(csv_file)
+    
+    # Filter out columns whose names start with "Class_"
+    non_class_columns = [col for col in df.columns if not col.startswith('Class_')]
+    
+    return non_class_columns
+
+
+
+Using_UCSD = True # Type True or False here
 
 if Using_UCSD == True:
 
@@ -33,25 +84,37 @@ if Using_UCSD == True:
     models_per_rp = 2  # number of models to select for the fusion per response permutation
     feature_range = range(1,225)
     num_prc = 7  # number of processors to split the job during parallelization
-    parallelize = True
+    parallelize = False
     random_seed_number = 42
 
 else:
     # Enter the directory you want your results to go
     results_dir = "" 
-    # Enter the directory your data set is coming from
+    # Enter the directory your data set is coming from and where reshaped data should go
     data_dir = ""
-     
+    new_data_dir = ""
 
-    # Enter the features and class labels you'd wish to use respectively
+    #function to convert truth labels for tabular data
+    convert_ground_truth_to_binary(data_dir, new_data_dir)
+
+    data_dir = new_data_dir
+
+    #Enter the column in the data which corresponds to target labels
+    label_column = 0 
+
+    # Enter the features and class labels you'd wish to use respectively. Leave empty to fuse all sensors
     sensors_to_fuse = [] 
 
-    # No more than 6 Labels
+    if sensors_to_fuse is []:
+        sensors_to_fuse = get_non_class_columns(data_dir)
+        print('Dropping no sensors')
+
+    # No more than 6 Labels in FOD
     FOD = [
-    "label: CLASS_PRED1_HERE ",
-    "label: CLASS_PRED2_HERE ",
-    "label: CLASS_PRED3_HERE ",
-    "label: CLASS_PRED4_HERE ",
+    "CLASS_PRED1_HERE ",
+    "CLASS_PRED2_HERE ",
+    "CLASS_PRED3_HERE ",
+    "CLASS_PRED4_HERE ",
     ]
 
     def Set_Act_Sens_NEW():
@@ -75,7 +138,8 @@ else:
      Activities["label:BICYCLING"] = 230
      Activities["label:SLEEPING"] = 231
      Activities["label:OR_standing"] = 270
-
+    
+    #Group features by "sensor"
      Sensors = {}
      Sensors["Acc"] = list(range(1, 27))
      Sensors["Gyro"] = list(range(27, 53))
@@ -104,7 +168,7 @@ else:
     # Enter the feature range for you data set
     feature_range = range(1,225)
     num_prc = 7  # number of processors to split the job during parallelization
-    parallelize = True
+    parallelize = False
     random_seed_number = 42
 
 

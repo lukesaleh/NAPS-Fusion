@@ -435,7 +435,8 @@ def main():
         stop2 = timeit.default_timer()
 
         print("Combining the data took:   ", int(stop2 - stop1))
-
+        if os.path.exists('combined_data.csv') is not True:
+            dataset_ag.to_csv('combined_data.csv', index=False)
         # =============================================================================#
         # -----------------------------| DST Setups |----------------------------------#
         # =============================================================================#
@@ -661,6 +662,7 @@ def main():
 
     y_test_ag = np.zeros([len(test_dataset), len(config.FOD)])
     y_pred_ag = np.zeros([len(test_dataset), len(config.FOD)])
+    #FIXME: fill with NaN, then remove all NaNs at end
     model_auc_ag = np.zeros([len(test_dataset), num_rp*num_fs])
     model_pred_ag2 = np.zeros([len(test_dataset), num_rp*num_fs])
     model_true_ag = np.zeros([len(test_dataset), num_rp*num_fs ])
@@ -775,7 +777,7 @@ def main():
     else:
         y_model_pred = []
         y_true = []
-        for t in range(0, len(test_dataset), 50):
+        for t in range(0, len(test_dataset)):
             print(t, "/", len(test_dataset))
             test_sample = test_dataset.iloc[t, :]
             test_sample = test_sample.to_frame().transpose()
