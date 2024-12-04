@@ -26,10 +26,10 @@ def convert_ground_truth_to_binary(input_file, output_file):
     
     # Create binary columns for each class
     for cls in unique_classes:
-        df[f'Class_{cls}'] = (ground_truth == cls).astype(int)
+        df[f'CLASS_{cls}'] = (ground_truth == cls).astype(int)
     
     # Drop the original ground truth column
-    df = df.drop(columns=df.columns[-2])  # Drop the original class column (before binary transformation)
+    df = df.drop(columns=df.columns[-6])  # Drop the original class column (before binary transformation)
     
     # Save the resulting DataFrame to a new CSV file
     df.to_csv(output_file, index=False)
@@ -55,11 +55,11 @@ def get_non_class_columns(csv_file):
     return non_class_columns
 
 
-
-Using_UCSD = True # Type True or False here
+model_used = "logistic regression" #"decision tree" or "logistic regression"
+Using_UCSD = False # Type True or False here
 
 if Using_UCSD == True:
-
+    pretty_labels = {0: "Lying down", 1: "Sitting", 2: "Standing", 3: "Walking"}
     results_dir = "../results/naps.baseline_original"
     data_dir = "../data/NAPS-Fusion/datasets/"
     cvdir = "../data/NAPS-Fusion/cv5Folds/cv_5_folds/"
@@ -89,10 +89,10 @@ if Using_UCSD == True:
 
 else:
     # Enter the directory you want your results to go
-    results_dir = "" 
+    results_dir = "../results/epilepsy"
     # Enter the directory your data set is coming from and where reshaped data should go
-    data_dir = ""
-    new_data_dir = ""
+    data_dir = "../data/epilepsy.csv"
+    new_data_dir = "../data/epilepsy_transform.csv"
 
     #function to convert truth labels for tabular data
     convert_ground_truth_to_binary(data_dir, new_data_dir)
@@ -102,20 +102,21 @@ else:
     #Enter the column in the data which corresponds to target labels
     label_column = 0 
 
-    # Enter the features and class labels you'd wish to use respectively. Leave empty to fuse all sensors
-    sensors_to_fuse = [] 
-
-    if sensors_to_fuse is []:
-        sensors_to_fuse = get_non_class_columns(data_dir)
-        print('Dropping no sensors')
+    # Enter the features and class labels you'd wish to use respectively
+    sensors_to_fuse = ["Set1", "Set2", "Set3", "Set4", "Set5","Set6"] 
 
     # No more than 6 Labels in FOD
     FOD = [
-    "CLASS_PRED1_HERE ",
-    "CLASS_PRED2_HERE ",
-    "CLASS_PRED3_HERE ",
-    "CLASS_PRED4_HERE ",
+    "CLASS_1",
+    "CLASS_2",
+    "CLASS_3",
+    "CLASS_4",
+    "CLASS_5"
     ]
+    
+    #Write down better class names here
+
+    pretty_labels = {0: "Class 1", 1: "Class 2", 2: "Class 3", 3: "Class 4", 4: "Class 5"}
 
     def Set_Act_Sens_NEW():
 
@@ -131,25 +132,23 @@ else:
                         of features
      """
      Activities = {}
-     Activities["label:LYING_DOWN"] = 226
-     Activities["label:SITTING"] = 227
-     Activities["label:FIX_walking"] = 228
-     Activities["label:FIX_running"] = 229
-     Activities["label:BICYCLING"] = 230
-     Activities["label:SLEEPING"] = 231
-     Activities["label:OR_standing"] = 270
+     Activities["CLASS_1"] = 180
+     Activities["CLASS_2"] = 181
+     Activities["CLASS_3"] = 182
+     Activities["CLASS_4"] = 183
+     Activities["CLASS_5"] = 184
     
     #Group features by "sensor"
      Sensors = {}
-     Sensors["Acc"] = list(range(1, 27))
-     Sensors["Gyro"] = list(range(27, 53))
+     Sensors["Set1"] = list(range(0, 29))
+     Sensors["Set2"] = list(range(29, 58))
      #    Sensors['Mag'] = list(range(53,84))
-     Sensors["W_acc"] = list(range(84, 130))
+     Sensors["Set3"] = list(range(58, 87))
      #    Sensors['Compass'] = list(range(130,139))
-     Sensors["Loc"] = list(range(139, 156))
-     Sensors["Aud"] = list(range(156, 182))
+     Sensors["Set4"] = list(range(87, 116))
+     Sensors["Set5"] = list(range(116, 145))
      #    Sensors['AP'] = list(range(182,184))
-     Sensors["PS"] = list(np.append(range(184, 210), range(218, 226)))
+     Sensors["Set6"] = list((range(145, 178)))
      #    Sensors['LF'] = list(range(210,218))
 
      return (Activities, Sensors)
@@ -168,7 +167,7 @@ else:
     # Enter the feature range for you data set
     feature_range = range(1,225)
     num_prc = 7  # number of processors to split the job during parallelization
-    parallelize = False
+    parallelize = True
     random_seed_number = 42
 
 

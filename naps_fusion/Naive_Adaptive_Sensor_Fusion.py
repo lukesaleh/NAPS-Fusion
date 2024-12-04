@@ -11,8 +11,11 @@ import random
 import numpy as np
 import sys
 import pandas as pd
+import config
 from sklearn import preprocessing
 from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.base import clone
 import itertools
 import sys
@@ -47,9 +50,16 @@ class DS_Model:
         """
         self.Feature_Set_idx = feature_set_idx
         self.Response_Variables = [resp_var_1, resp_var_2]
-        self.clf = LogisticRegression(
+
+        if config.model_used == "decision tree":
+            self.clf = DecisionTreeClassifier(criterion='gini', max_leaf_nodes=5, max_depth=3).fit(X_train, y_train)
+        elif config.model_used == "logistic regression":
+            self.clf = LogisticRegression(
             class_weight="balanced", solver="saga", n_jobs=-1
-        ).fit(X_train, y_train)
+            ).fit(X_train, y_train)
+        else:
+            print('Invalid model selected!')
+            sys.exit(1)
         self.Bags = []  # list of the bags for this model
         self.Uncertainty_B = 0  # Uncertainty of the biased model
         self.mass = MassFunction()  # Mass function of the model

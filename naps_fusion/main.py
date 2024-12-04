@@ -193,9 +193,14 @@ def Xy(
     indices = np.where(aux == 1)[0]
 
     if len(indices) > 1:
-        y1 = y1.loc[indices, :]
-        y2 = y2.loc[indices, :]
-        X = X.loc[indices, :]
+        if config.Using_UCSD == False:
+            X = X.iloc[indices, :].reset_index(drop=True)
+            y1 = y1.iloc[indices, :].reset_index(drop=True)
+            y2 = y2.iloc[indices, :].reset_index(drop=True)
+        else:
+            y1 = y1.loc[indices, :]
+            y2 = y2.loc[indices, :]
+            X = X.loc[indices, :]
 
     y = y1
 
@@ -523,7 +528,7 @@ def main():
         train_dataset, test_dataset = train_test_split_new(config.data_dir)
 
         stop3 = timeit.default_timer()
-        print("Obtaining the training dataset took:   ", int(stop3 - stop2))
+        print("Obtaining the training dataset took:   ", int(stop3 - start_time))
 
         print("Training dataset has  {}  samples".format(len(train_dataset))) 
 
@@ -842,8 +847,11 @@ def main():
         model_auc_vector = [row[0] for row in model_auc_ag]
         model_true_flat = [item for sublist in model_true_ag for item in sublist ]
         model_pred_flat = [item for sublist in  model_pred_ag2 for item in sublist]
-        fpr, tpr, threshold = roc_curve(model_true_flat, model_pred_flat)     
-        print('Model auc:', auc(fpr, tpr)) #TODO: save to pickle
+        fpr, tpr, threshold = roc_curve(model_true_flat, model_pred_flat)   
+        if config.model_used == "logistic regression":
+            print('AUC for logistic regression models in bags:', auc(fpr, tpr)) #TODO: save to pickle
+        else:
+            print('AUC for decision tree models in bags:', auc(fpr, tpr))
         
     # conf_mat = confusion_matrix(y_test_ag, y_pred_ag)
     # accuracy = accuracy_score(y_test_ag, y_pred_ag)
@@ -851,12 +859,14 @@ def main():
     # f1 = f1_score(y_test_ag, y_pred_ag)
     else:
         fpr, tpr, threshold = roc_curve(y_true, y_model_pred)
-        print('AUC for logistic regression models in bags:',auc(fpr, tpr)) #TODO: Save to pickle
+        if config.model_used == "logistic regression":
+            print('AUC for logistic regression models in bags:',auc(fpr, tpr)) #TODO: Save to pickle
+        else:
+            print('AUC for decision tree models in bags:',auc(fpr, tpr))
     # TODO: Automate this
-    pretty_labels = {0: "Lying down", 1: "Sitting", 2: "Standing", 3: "Walking"}
     # pretty_labels =  {idx: get_pretty_label_name(raw_label) for idx, raw_label in enumerate(config.FOD)}
     cm = ConfusionMatrix(actual_vector=y_test_vector, predict_vector=y_pred_vector)
-    cm.relabel(mapping=pretty_labels)
+    cm.relabel(mapping=config.pretty_labels)
     print(cm)
     # print('Best model AUC:',max(model_auc_vector))
     # print('Worst model AUC:',min(model_auc_vector))
@@ -864,7 +874,7 @@ def main():
     plot_confusion_matrix(
         y_test_vector,
         y_pred_vector,
-        list(pretty_labels.values()),
+        list(config.pretty_labels.values()),
         os.path.join(config.results_dir, "figures"),
     )
 
